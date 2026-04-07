@@ -5,6 +5,6 @@ interface RealtimeProviderProps {
   children: React.ReactNode
 }
 
-export default function RealtimeProvider({ userId: _userId, children }: RealtimeProviderProps) {
+export default function RealtimeProvider({ children }: RealtimeProviderProps) {
   return <>{children}</>
 }
