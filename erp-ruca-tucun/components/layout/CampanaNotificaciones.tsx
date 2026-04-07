@@ -10,9 +10,7 @@ import {
   marcarTodasLeidas,
 } from "@/lib/notificaciones";
 import { useUsuario } from "./UserContext";
-import type { NotificacionPublica } from "@/lib/notificaciones";
-
-import type { TipoNotificacion } from "@/lib/notificaciones";
+import type { NotificacionPublica, TipoNotificacion } from "@/lib/notificaciones";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -45,9 +43,9 @@ export default function CampanaNotificaciones() {
   const [, startTransition] = useTransition();
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Supabase client estable
+  // Supabase client estable — no se recrea entre renders
   const [supabase] = useState(() => createClientComponentClient());
-  // Ref para el canal activo — garantiza cleanup síncrono antes de re-suscribir
+  // Ref para el canal activo — permite cleanup síncrono antes de re-suscribir
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
@@ -63,14 +61,19 @@ export default function CampanaNotificaciones() {
   // ── Realtime ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Limpiar canal anterior antes de crear uno nuevo
+    // Limpiar canal anterior de forma síncrona antes de crear uno nuevo.
+    // unsubscribe() es síncrono y deja el canal en estado limpio de inmediato,
+    // evitando que Supabase reutilice un canal ya suscrito cuando se llama a
+    // .channel() con el mismo nombre y falle al agregar callbacks con .on().
     if (channelRef.current) {
+      void channelRef.current.unsubscribe();
       void supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
 
     void cargar();
 
+    // Orden correcto: .channel() → .on() → .subscribe()
     const channel = supabase
       .channel(`notificaciones:${usuario.id}`)
       .on(
@@ -91,12 +94,12 @@ export default function CampanaNotificaciones() {
 
     return () => {
       if (channelRef.current) {
+        void channelRef.current.unsubscribe();
         void supabase.removeChannel(channelRef.current);
         channelRef.current = null;
       }
     };
-    // supabase es estable (useState), cargar se redefine en cada render pero
-    // su comportamiento no cambia — solo usuario.id importa como dep
+    // supabase es estable (useState) — solo usuario.id importa como dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario.id]);
 
