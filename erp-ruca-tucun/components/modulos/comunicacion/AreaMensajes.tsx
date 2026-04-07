@@ -97,6 +97,8 @@ export default function AreaMensajes({
   const [, startTransition] = useTransition();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [supabase] = useState(() => createClientComponentClient());
+  // Ref para el canal activo — garantiza cleanup síncrono antes de re-suscribir
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   const puedeEscribir = mode === "dm" || puede_escribir;
 
@@ -144,6 +146,12 @@ export default function AreaMensajes({
   // ── Realtime ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Limpiar canal anterior antes de crear uno nuevo
+    if (channelRef.current) {
+      void supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
     if (mode === "canal" && canal_id) {
       const channel = supabase
         .channel(`mensajes-canal-${canal_id}`)
@@ -164,12 +172,8 @@ export default function AreaMensajes({
         )
         .subscribe();
 
-      return () => {
-        void supabase.removeChannel(channel);
-      };
-    }
-
-    if (mode === "dm" && interlocutor_id) {
+      channelRef.current = channel;
+    } else if (mode === "dm" && interlocutor_id) {
       const channel = supabase
         .channel(`mensajes-dm-${usuario_id}-${interlocutor_id}`)
         .on(
@@ -192,11 +196,18 @@ export default function AreaMensajes({
         )
         .subscribe();
 
-      return () => {
-        void supabase.removeChannel(channel);
-      };
+      channelRef.current = channel;
     }
-  }, [mode, canal_id, interlocutor_id, usuario_id, supabase]);
+
+    return () => {
+      if (channelRef.current) {
+        void supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
+    };
+    // supabase es estable (useState), no necesita estar en deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, canal_id, interlocutor_id, usuario_id]);
 
   // ── Envío ──────────────────────────────────────────────────────────────────
 

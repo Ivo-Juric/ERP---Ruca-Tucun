@@ -47,6 +47,8 @@ export default function CampanaNotificaciones() {
 
   // Supabase client estable
   const [supabase] = useState(() => createClientComponentClient());
+  // Ref para el canal activo — garantiza cleanup síncrono antes de re-suscribir
+  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
 
   // ── Carga inicial ──────────────────────────────────────────────────────────
 
@@ -61,6 +63,12 @@ export default function CampanaNotificaciones() {
   // ── Realtime ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
+    // Limpiar canal anterior antes de crear uno nuevo
+    if (channelRef.current) {
+      void supabase.removeChannel(channelRef.current);
+      channelRef.current = null;
+    }
+
     void cargar();
 
     const channel = supabase
@@ -79,9 +87,16 @@ export default function CampanaNotificaciones() {
       )
       .subscribe();
 
+    channelRef.current = channel;
+
     return () => {
-      void supabase.removeChannel(channel);
+      if (channelRef.current) {
+        void supabase.removeChannel(channelRef.current);
+        channelRef.current = null;
+      }
     };
+    // supabase es estable (useState), cargar se redefine en cada render pero
+    // su comportamiento no cambia — solo usuario.id importa como dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario.id]);
 
