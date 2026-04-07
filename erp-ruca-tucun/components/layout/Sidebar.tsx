@@ -17,6 +17,7 @@ import {
 import { createClientComponentClient } from "@/lib/supabase";
 import { checkPermiso, type Modulo } from "@/lib/auth";
 import { useUsuario } from "./UserContext";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
 
@@ -132,15 +133,19 @@ export default function Sidebar() {
 
       {/* Usuario + logout */}
       <div className="border-t border-ruca-gray-light p-4">
-        <div className="mb-3 min-w-0">
-          <p className="truncate text-sm font-semibold text-white">
-            {usuario.nombre} {usuario.apellido}
-          </p>
-          <p className="truncate text-xs text-zinc-500">
-            {LABEL_ROL[usuario.rol] ?? usuario.rol}
-          </p>
+        <div className="mb-3 flex items-center justify-between gap-2 min-w-0">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-white">
+              {usuario.nombre} {usuario.apellido}
+            </p>
+            <p className="truncate text-xs text-zinc-500">
+              {LABEL_ROL[usuario.rol] ?? usuario.rol}
+            </p>
+          </div>
+          <CampanaNotificaciones />
         </div>
         <button
+          type="button"
           onClick={handleLogout}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-zinc-500 transition-colors hover:bg-ruca-gray hover:text-white"
         >

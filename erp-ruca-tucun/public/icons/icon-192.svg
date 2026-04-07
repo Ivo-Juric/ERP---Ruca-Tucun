@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <!-- Fondo negro -->
+  <rect width="192" height="192" rx="32" fill="#1A1A1A"/>
+
+  <!-- Estrella de 8 puntas en ruca-yellow (#D4B000) -->
+  <!-- Estrella base (5 puntas rotadas para dar 8) -->
+  <!-- Capa 1: estrella de 4 puntas alineada a los ejes -->
+  <polygon
+    points="96,24 108,84 168,96 108,108 96,168 84,108 24,96 84,84"
+    fill="#D4B000"
+  />
+  <!-- Capa 2: misma estrella rotada 45° -->
+  <polygon
+    points="96,24 108,84 168,96 108,108 96,168 84,108 24,96 84,84"
+    fill="#D4B000"
+    transform="rotate(45 96 96)"
+  />
+
+  <!-- Círculo central pequeño para definición -->
+  <circle cx="96" cy="96" r="14" fill="#1A1A1A"/>
+  <circle cx="96" cy="96" r="10" fill="#D4B000"/>
+</svg>

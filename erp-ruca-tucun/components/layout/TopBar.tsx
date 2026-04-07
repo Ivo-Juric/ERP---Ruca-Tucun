@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useUsuario } from "./UserContext";
 import Sidebar from "./Sidebar";
+import CampanaNotificaciones from "./CampanaNotificaciones";
 
-interface TopBarProps {
-  notificacionesSinLeer?: number;
-}
 
 function EstrellaSVG() {
   return (
@@ -32,7 +30,7 @@ function EstrellaSVG() {
   );
 }
 
-export default function TopBar({ notificacionesSinLeer = 0 }: TopBarProps) {
+export default function TopBar() {
   useUsuario(); // valida contexto
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -85,16 +83,7 @@ export default function TopBar({ notificacionesSinLeer = 0 }: TopBarProps) {
         </div>
 
         {/* Notificaciones */}
-        <div className="relative">
-          <button className="text-zinc-400 hover:text-white" aria-label="Notificaciones">
-            <Bell size={22} />
-          </button>
-          {notificacionesSinLeer > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-ruca-yellow px-1 text-[10px] font-bold text-ruca-black">
-              {notificacionesSinLeer > 99 ? "99+" : notificacionesSinLeer}
-            </span>
-          )}
-        </div>
+        <CampanaNotificaciones />
       </header>
     </>
   );

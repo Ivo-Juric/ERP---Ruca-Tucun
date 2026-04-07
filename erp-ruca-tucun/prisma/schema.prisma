@@ -175,6 +175,7 @@ model Usuario {
   circulares_creadas     Circular[]
   lecturas_circular      LecturaCircular[]
   anuncios_creados       Anuncio[]
+  notificaciones         Notificacion[]
 
   @@map("usuarios")
 }
@@ -452,4 +453,25 @@ model Anuncio {
   autor Usuario @relation(fields: [autor_id], references: [id])
 
   @@map("anuncios")
+}
+
+enum TipoNotificacion {
+  INFO
+  ALERTA
+  ACCION_REQUERIDA
+}
+
+model Notificacion {
+  id           String           @id @default(cuid())
+  usuario_id   String
+  titulo       String
+  contenido    String
+  tipo         TipoNotificacion @default(INFO)
+  leida        Boolean          @default(false)
+  url_destino  String?
+  creado_en    DateTime         @default(now())
+
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@map("notificaciones")
 }
