@@ -4,6 +4,7 @@ import { UserProvider, type UsuarioContexto } from "@/components/layout/UserCont
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import BottomNav from "@/components/layout/BottomNav";
+import RealtimeProvider from "@/components/layout/RealtimeProvider";
 
 export default async function DashboardLayout({
   children,
@@ -47,6 +48,7 @@ export default async function DashboardLayout({
 
   return (
     <UserProvider usuario={usuarioContexto}>
+      <RealtimeProvider userId={usuario.id}>
       <div className="flex min-h-screen bg-ruca-black">
         {/* Sidebar — solo desktop */}
         <Sidebar />
@@ -65,6 +67,7 @@ export default async function DashboardLayout({
           <BottomNav />
         </div>
       </div>
+      </RealtimeProvider>
     </UserProvider>
   );
 }
