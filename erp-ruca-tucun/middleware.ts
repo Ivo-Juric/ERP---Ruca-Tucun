@@ -1,4 +1,4 @@
-import { createServerClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -22,25 +22,24 @@ function esRutaProtegida(pathname: string): boolean {
 }
 
 export async function middleware(req: NextRequest) {
-  let res = NextResponse.next({ request: { headers: req.headers } });
+  let res = NextResponse.next({ request: req });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return req.cookies.get(name)?.value;
+        getAll() {
+          return req.cookies.getAll();
         },
-        set(name: string, value: string, options: Record<string, unknown>) {
-          req.cookies.set(name, value);
-          res = NextResponse.next({ request: { headers: req.headers } });
-          res.cookies.set(name, value, options as Parameters<typeof res.cookies.set>[2]);
-        },
-        remove(name: string, options: Record<string, unknown>) {
-          req.cookies.set(name, "");
-          res = NextResponse.next({ request: { headers: req.headers } });
-          res.cookies.set(name, "", options as Parameters<typeof res.cookies.set>[2]);
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) =>
+            req.cookies.set(name, value),
+          );
+          res = NextResponse.next({ request: req });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            res.cookies.set(name, value, options),
+          );
         },
       },
     },

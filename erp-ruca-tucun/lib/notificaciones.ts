@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma";
 import { getUsuarioActual } from "@/lib/auth";
 import type { TipoNotificacion } from "@prisma/client";
+export type { TipoNotificacion };
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 

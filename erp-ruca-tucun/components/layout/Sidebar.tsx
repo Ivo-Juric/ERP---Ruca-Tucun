@@ -15,7 +15,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { createClientComponentClient } from "@/lib/supabase";
-import { checkPermiso, type Modulo } from "@/lib/auth";
+import { checkPermiso, type Modulo } from "@/lib/permissions";
 import { useUsuario } from "./UserContext";
 import CampanaNotificaciones from "./CampanaNotificaciones";
 

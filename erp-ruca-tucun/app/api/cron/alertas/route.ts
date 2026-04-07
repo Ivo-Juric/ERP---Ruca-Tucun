@@ -81,7 +81,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
     }
 
     let alertasMiembros = 0;
-    for (const [, datos] of porMiembro) {
+    for (const datos of Array.from(porMiembro.values())) {
       if (datos.total < 2) continue; // con menos de 2 actividades no alertamos
       const pct = (datos.presentes / datos.total) * 100;
       if (pct < 50) {

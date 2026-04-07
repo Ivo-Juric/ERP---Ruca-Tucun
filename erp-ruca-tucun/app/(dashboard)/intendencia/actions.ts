@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { getUsuarioActual, checkPermiso } from "@/lib/auth";
+import { getUsuarioActual } from "@/lib/auth";
 import {
   CategoriaInventario,
   EstadoConservacion,
@@ -99,8 +99,6 @@ const ROLES_SOLICITAR: Rol[] = [
   "JEFE_AGRUP_FEMENINA",
 ];
 
-type UsuarioConSeccion = NonNullable<Awaited<ReturnType<typeof getUsuarioActual>>>;
-
 function solidarFecha(d: Date): string {
   return d.toISOString();
 }
@@ -150,15 +148,8 @@ export async function obtenerInventarioConAlertas(): Promise<
     return { ok: false, error: "Sin permiso." };
 
   try {
-    const items = await prisma.itemInventario.findMany({
-      where: {
-        cantidad_disponible: { lte: prisma.itemInventario.fields.stock_minimo },
-      },
-      orderBy: { nombre: "asc" },
-    });
-
-    // Prisma no puede comparar dos campos en el where directamente con campo raw,
-    // así que filtramos en JS:
+    // Prisma no puede comparar dos campos en el where directamente,
+    // así que traemos todos y filtramos en JS:
     const todos = await prisma.itemInventario.findMany({
       orderBy: { nombre: "asc" },
     });

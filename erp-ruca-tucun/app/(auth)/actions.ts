@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { createServerActionClient } from "@/lib/supabase";
+import { createServerActionClient } from "@/lib/supabase-server";
 
 export async function loginAction(formData: FormData) {
   const email = formData.get("email") as string;
@@ -11,7 +11,7 @@ export async function loginAction(formData: FormData) {
     redirect("/login?error=credenciales_invalidas");
   }
 
-  const supabase = createServerActionClient();
+  const supabase = await createServerActionClient();
 
   const { error } = await supabase.auth.signInWithPassword({
     email,

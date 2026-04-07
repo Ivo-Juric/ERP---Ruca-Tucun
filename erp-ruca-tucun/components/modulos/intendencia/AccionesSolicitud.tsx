@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle, XCircle, ThumbsUp, RotateCcw, ChevronDown } from "lucide-react";
+import { CheckCircle, XCircle, ThumbsUp, RotateCcw } from "lucide-react";
 import {
   confirmarSolicitudJefe,
   aprobarSolicitud,

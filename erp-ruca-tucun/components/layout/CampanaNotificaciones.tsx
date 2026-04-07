@@ -11,7 +11,8 @@ import {
 } from "@/lib/notificaciones";
 import { useUsuario } from "./UserContext";
 import type { NotificacionPublica } from "@/lib/notificaciones";
-import type { TipoNotificacion } from "@prisma/client";
+
+import type { TipoNotificacion } from "@/lib/notificaciones";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 

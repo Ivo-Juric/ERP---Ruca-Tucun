@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { getUsuarioActual } from "@/lib/auth";
 import type { Rol } from "@prisma/client";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────

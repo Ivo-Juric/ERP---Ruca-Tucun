@@ -157,17 +157,22 @@ export async function obtenerProgresoFDoc(filtros?: {
   const anio = new Date().getFullYear();
 
   try {
-    let wherePlan: { seccion_id?: string | { in: string[] }; anio: number } = { anio };
+    let seccionIdFiltro: string | { in: string[] } | undefined;
 
     if (filtros?.seccion_id) {
-      wherePlan.seccion_id = filtros.seccion_id;
+      seccionIdFiltro = filtros.seccion_id;
     } else if (filtros?.agrupacion_tipo) {
       const secciones = await prisma.seccion.findMany({
         where: { agrupacion: { tipo: filtros.agrupacion_tipo as "MASCULINA" | "FEMENINA" | "MILICIANOS" } },
         select: { id: true },
       });
-      wherePlan.seccion_id = { in: secciones.map((s) => s.id) };
+      seccionIdFiltro = { in: secciones.map((s) => s.id) };
     }
+
+    const wherePlan = {
+      anio,
+      ...(seccionIdFiltro !== undefined ? { seccion_id: seccionIdFiltro } : {}),
+    };
 
     const planes = await prisma.planFDoc.findMany({
       where: wherePlan,

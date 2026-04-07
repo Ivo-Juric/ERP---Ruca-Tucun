@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getUsuarioActual } from "@/lib/auth";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-server";
 import type { Rol } from "@prisma/client";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────

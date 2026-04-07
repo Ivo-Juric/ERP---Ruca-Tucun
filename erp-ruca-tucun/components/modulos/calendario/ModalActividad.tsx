@@ -12,7 +12,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { useUsuario } from "@/components/layout/UserContext";
-import { checkPermiso } from "@/lib/auth";
+import { checkPermiso } from "@/lib/permissions";
 import {
   aprobarActividad,
   cancelarActividad,

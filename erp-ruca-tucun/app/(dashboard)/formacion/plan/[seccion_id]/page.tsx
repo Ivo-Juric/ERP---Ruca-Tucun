@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
-import { ChevronLeft, Check, Circle, Plus, Calendar } from "lucide-react";
+import { ChevronLeft, Check, Circle, Calendar } from "lucide-react";
 import { getUsuarioActual, checkPermiso } from "@/lib/auth";
 import {
   obtenerPlanSeccion,
