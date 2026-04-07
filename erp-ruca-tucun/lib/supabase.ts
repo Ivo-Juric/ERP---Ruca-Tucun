@@ -4,14 +4,12 @@ import { cookies } from 'next/headers'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-// Cliente para componentes del lado del cliente
 export function createClientComponentClient() {
   return createBrowserClient(supabaseUrl, supabaseAnonKey)
 }
 
-// Cliente para componentes del lado del servidor
-export function createServerComponentClient() {
-  const cookieStore = cookies()
+export async function createServerComponentClient() {
+  const cookieStore = await cookies()
   return createServerClient(supabaseUrl, supabaseAnonKey, {
     cookies: {
       getAll() {
