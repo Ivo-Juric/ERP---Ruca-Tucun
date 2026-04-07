@@ -4,7 +4,6 @@ import { UserProvider, type UsuarioContexto } from "@/components/layout/UserCont
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import BottomNav from "@/components/layout/BottomNav";
-import RealtimeProvider from "@/components/layout/RealtimeProvider";
 
 export default async function DashboardLayout({
   children,
@@ -47,27 +46,17 @@ export default async function DashboardLayout({
   };
 
   return (
-    <UserProvider usuario={usuarioContexto}>
-      <RealtimeProvider userId={usuario.id}>
-      <div className="flex min-h-screen bg-ruca-black">
-        {/* Sidebar — solo desktop */}
-        <Sidebar />
-
-        {/* Contenido principal */}
-        <div className="flex flex-1 flex-col">
-          {/* TopBar — solo mobile */}
-          <TopBar />
-
-          {/* Página */}
-          <main className="flex-1 overflow-y-auto px-4 py-6 pt-20 md:px-8 md:pt-6 pb-20 md:pb-6">
-            {children}
-          </main>
-
-          {/* BottomNav — solo mobile */}
-          <BottomNav />
-        </div>
+  <UserProvider usuario={usuarioContexto}>
+    <div className="flex min-h-screen bg-ruca-black">
+      <Sidebar />
+      <div className="flex flex-1 flex-col">
+        <TopBar />
+        <main className="flex-1 overflow-y-auto px-4 py-6 pt-20 md:px-8 md:pt-6 pb-20 md:pb-6">
+          {children}
+        </main>
+        <BottomNav />
       </div>
-      </RealtimeProvider>
-    </UserProvider>
-  );
+    </div>
+  </UserProvider>
+);
 }
