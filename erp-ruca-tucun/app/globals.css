@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* ─── FullCalendar — tema oscuro Ruca Tucún ─────────────────────────────── */
+.ruca-calendar .fc {
+  --fc-border-color: #3A3A3A;
+  --fc-button-bg-color: #2A2A2A;
+  --fc-button-border-color: #3A3A3A;
+  --fc-button-hover-bg-color: #3A3A3A;
+  --fc-button-hover-border-color: #D4B000;
+  --fc-button-active-bg-color: #D4B000;
+  --fc-button-active-border-color: #D4B000;
+  --fc-today-bg-color: rgba(212, 176, 0, 0.08);
+  --fc-page-bg-color: #1A1A1A;
+  --fc-neutral-bg-color: #2A2A2A;
+  --fc-list-event-hover-bg-color: #2A2A2A;
+  --fc-event-border-color: transparent;
+  background-color: #1A1A1A;
+  color: #e4e4e7;
+  font-size: 0.875rem;
+}
+
+.ruca-calendar .fc .fc-button {
+  color: #a1a1aa;
+  font-weight: 500;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  font-size: 0.8rem;
+}
+
+.ruca-calendar .fc .fc-button-active,
+.ruca-calendar .fc .fc-button:focus {
+  color: #1A1A1A !important;
+  box-shadow: none !important;
+}
+
+.ruca-calendar .fc .fc-toolbar-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-transform: capitalize;
+}
+
+.ruca-calendar .fc .fc-col-header-cell-cushion,
+.ruca-calendar .fc .fc-daygrid-day-number,
+.ruca-calendar .fc .fc-list-day-text,
+.ruca-calendar .fc .fc-list-day-side-text {
+  color: #a1a1aa;
+  text-decoration: none;
+}
+
+.ruca-calendar .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+  color: #D4B000;
+  font-weight: 700;
+}
+
+.ruca-calendar .fc .fc-event {
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-width: 1px;
+}
+
+.ruca-calendar .fc .fc-event:hover {
+  filter: brightness(1.15);
+}
+
+.ruca-calendar .fc .fc-daygrid-more-link {
+  color: #D4B000;
+  font-size: 0.7rem;
+}
+
+.ruca-calendar .fc .fc-list-event {
+  cursor: pointer;
+}
+
+.ruca-calendar .fc .fc-list-event-dot {
+  border-color: #D4B000;
+}
+
+.ruca-calendar .fc td,
+.ruca-calendar .fc th {
+  border-color: #3A3A3A;
+}
+
+.ruca-calendar .fc .fc-scrollgrid {
+  border-color: #3A3A3A;
+}

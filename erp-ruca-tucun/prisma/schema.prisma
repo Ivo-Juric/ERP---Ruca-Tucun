@@ -1,0 +1,455 @@
+// Prisma schema — ERP Ruca Tucún
+// Proveedor: PostgreSQL (Supabase)
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Rol {
+  JEFE_RUCA
+  SECRETARIO
+  JEFE_INTENDENCIA
+  SUBJEFE_INTENDENCIA
+  JEFE_COMUNICACIONES
+  SUBJEFE_COMUNICACIONES
+  JEFE_FDOC
+  SUBJEFE_FDOC
+  JEFE_MILICIANOS
+  JEFE_AGRUP_MASCULINA
+  JEFE_AGRUP_FEMENINA
+  JEFE_SECCION
+  SUBJEFE_SECCION
+}
+
+enum EstadoUsuario {
+  ACTIVO
+  INACTIVO
+  SUSPENDIDO
+}
+
+enum TipoAgrupacion {
+  MASCULINA
+  FEMENINA
+  MILICIANOS
+}
+
+enum EstadoMiembro {
+  ACTIVO
+  INACTIVO
+  EGRESADO
+}
+
+enum TipoActividad {
+  SABADO
+  CAMPAMENTO
+  JORNADA_FORMACION
+  JORNADA_JEFES
+  REUNION_JEFES
+  RETIRO
+  MISA
+  EXTRAORDINARIA
+}
+
+enum EstadoActividad {
+  PLANIFICADA
+  CONFIRMADA
+  REALIZADA
+  CANCELADA
+}
+
+enum CategoriaInventario {
+  CAMPAMENTO
+  FORMACION
+  MOBILIARIO
+  INDUMENTARIA
+  OTRO
+}
+
+enum EstadoConservacion {
+  BUENO
+  REGULAR
+  MALO
+  FUERA_DE_USO
+}
+
+enum EstadoSolicitud {
+  PENDIENTE_JEFE
+  PENDIENTE_INTENDENCIA
+  APROBADA
+  APROBADA_PARCIAL
+  RECHAZADA
+}
+
+enum TipoCanal {
+  GENERAL
+  JEFES_GENERALES
+  AGRUPACION
+  SECCION
+  DEPARTAMENTO
+}
+
+enum CategoriaAnuncio {
+  URGENTE
+  INFORMATIVO
+  RECORDATORIO
+}
+
+// ─── Modelos ─────────────────────────────────────────────────────────────────
+
+model Agrupacion {
+  id        String         @id @default(cuid())
+  nombre    String
+  patrono   String
+  tipo      TipoAgrupacion
+
+  secciones Seccion[]
+
+  @@map("agrupaciones")
+}
+
+model Seccion {
+  id                  String   @id @default(cuid())
+  nombre              String
+  patrono             String
+  nivel_escolar_desde Int
+  nivel_escolar_hasta Int
+  agrupacion_id       String
+  creado_en           DateTime @default(now())
+
+  agrupacion      Agrupacion       @relation(fields: [agrupacion_id], references: [id])
+  usuarios        Usuario[]
+  miembros        Miembro[]
+  actividades     Actividad[]
+  sesiones_fdoc   SesionFDoc[]
+  planes_fdoc     PlanFDoc[]
+  materiales      Material[]
+
+  @@map("secciones")
+}
+
+model Departamento {
+  id          String  @id @default(cuid())
+  nombre      String
+  descripcion String?
+
+  usuarios Usuario[]
+
+  @@map("departamentos")
+}
+
+model Usuario {
+  id              String        @id @default(cuid())
+  email           String        @unique
+  nombre          String
+  apellido        String
+  foto_url        String?
+  rol             Rol
+  estado          EstadoUsuario @default(ACTIVO)
+  seccion_id      String?
+  departamento_id String?
+  creado_en       DateTime      @default(now())
+  actualizado_en  DateTime      @updatedAt
+
+  seccion      Seccion?      @relation(fields: [seccion_id], references: [id])
+  departamento Departamento? @relation(fields: [departamento_id], references: [id])
+
+  actividades_creadas    Actividad[]        @relation("ActividadCreadaPor")
+  asistencias_registradas Asistencia[]      @relation("AsistenciaRegistradaPor")
+  sesiones_fdoc_registradas SesionFDoc[]    @relation("SesionFDocRegistradaPor")
+  planes_fdoc_creados    PlanFDoc[]         @relation("PlanFDocCreadoPor")
+  materiales_subidos     Material[]         @relation("MaterialSubidoPor")
+  solicitudes_hechas     SolicitudRecurso[] @relation("SolicitudHechaPor")
+  canales_miembro        MiembroCanal[]
+  mensajes_enviados      Mensaje[]
+  mensajes_directos_emitidos  MensajeDirecto[] @relation("MensajeDirectoEmisor")
+  mensajes_directos_recibidos MensajeDirecto[] @relation("MensajeDirectoReceptor")
+  circulares_creadas     Circular[]
+  lecturas_circular      LecturaCircular[]
+  anuncios_creados       Anuncio[]
+
+  @@map("usuarios")
+}
+
+model Miembro {
+  id               String        @id @default(cuid())
+  nombre           String
+  apellido         String
+  fecha_nacimiento DateTime      @db.Date
+  foto_url         String?
+  seccion_id       String
+  estado           EstadoMiembro @default(ACTIVO)
+  anio_ingreso     Int
+  telefono         String?
+  email            String?
+  telefono_tutor   String?
+  email_tutor      String?
+  observaciones    String?
+  creado_en        DateTime      @default(now())
+  actualizado_en   DateTime      @updatedAt
+
+  seccion          Seccion          @relation(fields: [seccion_id], references: [id])
+  asistencias      Asistencia[]
+  asistencias_fdoc AsistenciaFDoc[]
+
+  @@map("miembros")
+}
+
+model Actividad {
+  id                  String          @id @default(cuid())
+  titulo              String
+  descripcion         String?
+  tipo                TipoActividad
+  estado              EstadoActividad @default(PLANIFICADA)
+  fecha_inicio        DateTime
+  fecha_fin           DateTime
+  lugar               String?
+  requiere_aprobacion Boolean         @default(false)
+  creado_por_id       String
+  seccion_id          String?
+  agrupacion_id       String?
+  creado_en           DateTime        @default(now())
+
+  creado_por   Usuario    @relation("ActividadCreadaPor", fields: [creado_por_id], references: [id])
+  seccion      Seccion?   @relation(fields: [seccion_id], references: [id])
+  asistencias  Asistencia[]
+  solicitudes  SolicitudRecurso[]
+
+  @@map("actividades")
+}
+
+model Asistencia {
+  id                String   @id @default(cuid())
+  miembro_id        String
+  actividad_id      String
+  presente          Boolean  @default(false)
+  registrado_por_id String
+  creado_en         DateTime @default(now())
+
+  miembro        Miembro   @relation(fields: [miembro_id], references: [id])
+  actividad      Actividad @relation(fields: [actividad_id], references: [id])
+  registrado_por Usuario   @relation("AsistenciaRegistradaPor", fields: [registrado_por_id], references: [id])
+
+  @@unique([miembro_id, actividad_id])
+  @@map("asistencias")
+}
+
+model PlanFDoc {
+  id            String @id @default(cuid())
+  anio          Int
+  seccion_id    String
+  creado_por_id String
+
+  seccion    Seccion        @relation(fields: [seccion_id], references: [id])
+  creado_por Usuario        @relation("PlanFDocCreadoPor", fields: [creado_por_id], references: [id])
+  items      PlanFDocItem[]
+
+  @@unique([anio, seccion_id])
+  @@map("planes_fdoc")
+}
+
+model PlanFDocItem {
+  id               String  @id @default(cuid())
+  tema             String
+  texto_referencia String?
+  objetivo         String?
+  semana_estimada  Int?
+  orden            Int
+  plan_id          String
+  completado       Boolean @default(false)
+
+  plan     PlanFDoc     @relation(fields: [plan_id], references: [id], onDelete: Cascade)
+  sesiones SesionFDoc[]
+
+  @@map("plan_fdoc_items")
+}
+
+model SesionFDoc {
+  id                String   @id @default(cuid())
+  fecha             DateTime @db.Date
+  tema              String
+  observaciones     String?
+  es_extra          Boolean  @default(false)
+  seccion_id        String
+  registrado_por_id String
+  plan_item_id      String?
+  creado_en         DateTime @default(now())
+
+  seccion        Seccion        @relation(fields: [seccion_id], references: [id])
+  registrado_por Usuario        @relation("SesionFDocRegistradaPor", fields: [registrado_por_id], references: [id])
+  plan_item      PlanFDocItem?  @relation(fields: [plan_item_id], references: [id])
+  asistencias    AsistenciaFDoc[]
+
+  @@map("sesiones_fdoc")
+}
+
+model AsistenciaFDoc {
+  id         String  @id @default(cuid())
+  miembro_id String
+  sesion_id  String
+  presente   Boolean @default(false)
+
+  miembro Miembro    @relation(fields: [miembro_id], references: [id])
+  sesion  SesionFDoc @relation(fields: [sesion_id], references: [id])
+
+  @@unique([miembro_id, sesion_id])
+  @@map("asistencias_fdoc")
+}
+
+model Material {
+  id            String   @id @default(cuid())
+  nombre        String
+  descripcion   String?
+  url_archivo   String
+  tipo_archivo  String
+  seccion_id    String?
+  subido_por_id String
+  creado_en     DateTime @default(now())
+
+  seccion    Seccion? @relation(fields: [seccion_id], references: [id])
+  subido_por Usuario  @relation("MaterialSubidoPor", fields: [subido_por_id], references: [id])
+
+  @@map("materiales")
+}
+
+model ItemInventario {
+  id                   String              @id @default(cuid())
+  nombre               String
+  descripcion          String?
+  categoria            CategoriaInventario
+  cantidad_total       Int
+  cantidad_disponible  Int
+  estado_conservacion  EstadoConservacion  @default(BUENO)
+  ubicacion            String?
+  stock_minimo         Int                 @default(0)
+  creado_en            DateTime            @default(now())
+
+  solicitudes SolicitudRecurso[]
+
+  @@map("items_inventario")
+}
+
+model SolicitudRecurso {
+  id                      String          @id @default(cuid())
+  item_id                 String
+  cantidad                Int
+  actividad_id            String
+  solicitado_por_id       String
+  confirmado_por_jefe     Boolean         @default(false)
+  estado                  EstadoSolicitud @default(PENDIENTE_JEFE)
+  cantidad_aprobada       Int?
+  comentario_respuesta    String?
+  fecha_uso               DateTime
+  fecha_devolucion_esperada DateTime?
+  devuelto                Boolean         @default(false)
+  creado_en               DateTime        @default(now())
+
+  item           ItemInventario @relation(fields: [item_id], references: [id])
+  actividad      Actividad      @relation(fields: [actividad_id], references: [id])
+  solicitado_por Usuario        @relation("SolicitudHechaPor", fields: [solicitado_por_id], references: [id])
+
+  @@map("solicitudes_recurso")
+}
+
+model Canal {
+  id          String    @id @default(cuid())
+  nombre      String
+  descripcion String?
+  tipo        TipoCanal
+
+  miembros  MiembroCanal[]
+  mensajes  Mensaje[]
+
+  @@map("canales")
+}
+
+model MiembroCanal {
+  id           String  @id @default(cuid())
+  canal_id     String
+  usuario_id   String
+  puede_escribir Boolean @default(true)
+
+  canal   Canal   @relation(fields: [canal_id], references: [id], onDelete: Cascade)
+  usuario Usuario @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@unique([canal_id, usuario_id])
+  @@map("miembros_canal")
+}
+
+model Mensaje {
+  id        String   @id @default(cuid())
+  contenido String
+  canal_id  String
+  autor_id  String
+  creado_en DateTime @default(now())
+
+  canal Canal   @relation(fields: [canal_id], references: [id], onDelete: Cascade)
+  autor Usuario @relation(fields: [autor_id], references: [id])
+
+  @@map("mensajes")
+}
+
+model MensajeDirecto {
+  id         String   @id @default(cuid())
+  contenido  String
+  emisor_id  String
+  receptor_id String
+  leido      Boolean  @default(false)
+  creado_en  DateTime @default(now())
+
+  emisor   Usuario @relation("MensajeDirectoEmisor", fields: [emisor_id], references: [id])
+  receptor Usuario @relation("MensajeDirectoReceptor", fields: [receptor_id], references: [id])
+
+  @@map("mensajes_directos")
+}
+
+model Circular {
+  id              String    @id @default(cuid())
+  titulo          String
+  contenido       String
+  autor_id        String
+  programada_para DateTime?
+  enviada         Boolean   @default(false)
+  creado_en       DateTime  @default(now())
+
+  autor    Usuario           @relation(fields: [autor_id], references: [id])
+  lecturas LecturaCircular[]
+
+  @@map("circulares")
+}
+
+model LecturaCircular {
+  id          String   @id @default(cuid())
+  circular_id String
+  usuario_id  String
+  leido_en    DateTime @default(now())
+
+  circular Circular @relation(fields: [circular_id], references: [id], onDelete: Cascade)
+  usuario  Usuario  @relation(fields: [usuario_id], references: [id], onDelete: Cascade)
+
+  @@unique([circular_id, usuario_id])
+  @@map("lecturas_circular")
+}
+
+model Anuncio {
+  id        String           @id @default(cuid())
+  titulo    String
+  contenido String
+  categoria CategoriaAnuncio @default(INFORMATIVO)
+  fijado    Boolean          @default(false)
+  autor_id  String
+  activo    Boolean          @default(true)
+  creado_en DateTime         @default(now())
+
+  autor Usuario @relation(fields: [autor_id], references: [id])
+
+  @@map("anuncios")
+}
