@@ -61,21 +61,19 @@ export default function CampanaNotificaciones() {
   // ── Realtime ───────────────────────────────────────────────────────────────
 
   useEffect(() => {
-    // Limpiar canal anterior de forma síncrona antes de crear uno nuevo.
-    // unsubscribe() es síncrono y deja el canal en estado limpio de inmediato,
-    // evitando que Supabase reutilice un canal ya suscrito cuando se llama a
-    // .channel() con el mismo nombre y falle al agregar callbacks con .on().
-    if (channelRef.current) {
-      void channelRef.current.unsubscribe();
-      void supabase.removeChannel(channelRef.current);
-      channelRef.current = null;
-    }
-
     void cargar();
 
-    // Orden correcto: .channel() → .on() → .subscribe()
+    const channelName = `notificaciones-${usuario.id}`;
+
+    // Remover canal si ya existe con ese nombre
+    supabase.getChannels().forEach((ch) => {
+      if (ch.topic === `realtime:${channelName}`) {
+        void supabase.removeChannel(ch);
+      }
+    });
+
     const channel = supabase
-      .channel(`notificaciones:${usuario.id}`)
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
@@ -93,13 +91,9 @@ export default function CampanaNotificaciones() {
     channelRef.current = channel;
 
     return () => {
-      if (channelRef.current) {
-        void channelRef.current.unsubscribe();
-        void supabase.removeChannel(channelRef.current);
-        channelRef.current = null;
-      }
+      void supabase.removeChannel(channel);
+      channelRef.current = null;
     };
-    // supabase es estable (useState) — solo usuario.id importa como dep
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [usuario.id]);
 
