@@ -46,6 +46,7 @@ export default function TablaAsistencia({
     const registros = miembros.map((m) => ({
       miembro_id: m.id,
       presente: presentes[m.id] ?? false,
+      pago_sabado: false,
     }));
 
     const res = await registrarAsistencia(actividad_id, registros);

@@ -213,9 +213,34 @@ export async function darDeBajaMiembro(id: string): Promise<ActionResult<undefin
   }
 }
 
+export type AsistenciaExistente = {
+  miembro_id: string;
+  presente: boolean;
+  pago_sabado: boolean;
+};
+
+export async function obtenerAsistenciaActividad(
+  actividad_id: string,
+): Promise<ActionResult<AsistenciaExistente[]>> {
+  const usuario = await getUsuarioActual();
+  if (!usuario) return { ok: false, error: "No autenticado." };
+  if (!checkPermiso(usuario.rol, "MIEMBROS", "ver"))
+    return { ok: false, error: "Sin permiso." };
+
+  try {
+    const registros = await prisma.asistencia.findMany({
+      where: { actividad_id },
+      select: { miembro_id: true, presente: true, pago_sabado: true },
+    });
+    return { ok: true, data: registros };
+  } catch {
+    return { ok: false, error: "Error al obtener la asistencia." };
+  }
+}
+
 export async function registrarAsistencia(
   actividad_id: string,
-  registros: { miembro_id: string; presente: boolean }[],
+  registros: { miembro_id: string; presente: boolean; pago_sabado: boolean }[],
 ): Promise<ActionResult<undefined>> {
   const usuario = await getUsuarioActual();
   if (!usuario) return { ok: false, error: "No autenticado." };
@@ -232,11 +257,16 @@ export async function registrarAsistencia(
               actividad_id,
             },
           },
-          update: { presente: r.presente, registrado_por_id: usuario.id },
+          update: {
+            presente: r.presente,
+            pago_sabado: r.pago_sabado,
+            registrado_por_id: usuario.id,
+          },
           create: {
             miembro_id: r.miembro_id,
             actividad_id,
             presente: r.presente,
+            pago_sabado: r.pago_sabado,
             registrado_por_id: usuario.id,
           },
         }),
@@ -244,6 +274,7 @@ export async function registrarAsistencia(
     );
 
     revalidatePath("/miembros");
+    revalidatePath("/calendario");
     return { ok: true, data: undefined };
   } catch {
     return { ok: false, error: "Error al guardar la asistencia." };

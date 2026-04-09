@@ -232,6 +232,7 @@ model Asistencia {
   miembro_id        String
   actividad_id      String
   presente          Boolean  @default(false)
+  pago_sabado       Boolean  @default(false)
   registrado_por_id String
   creado_en         DateTime @default(now())
 

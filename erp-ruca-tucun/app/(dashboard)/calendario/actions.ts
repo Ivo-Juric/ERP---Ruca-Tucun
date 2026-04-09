@@ -268,11 +268,10 @@ export async function marcarRealizada(id: string): Promise<ActionResult<undefine
     select: { estado: true },
   });
   if (!actividad) return { ok: false, error: "Actividad no encontrada." };
-  if (actividad.estado !== EstadoActividad.CONFIRMADA)
-    return {
-      ok: false,
-      error: "Solo se pueden marcar como realizadas las actividades confirmadas.",
-    };
+  if (actividad.estado === EstadoActividad.REALIZADA)
+    return { ok: false, error: "La actividad ya fue marcada como realizada." };
+  if (actividad.estado === EstadoActividad.CANCELADA)
+    return { ok: false, error: "No se puede marcar como realizada una actividad cancelada." };
 
   try {
     await prisma.actividad.update({

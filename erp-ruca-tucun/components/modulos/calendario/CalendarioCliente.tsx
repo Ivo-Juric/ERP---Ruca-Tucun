@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -8,9 +9,7 @@ import listPlugin from "@fullcalendar/list";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { EventClickArg, EventInput } from "@fullcalendar/core";
 import { TipoActividad, EstadoActividad } from "@prisma/client";
-import ModalActividad from "./ModalActividad";
 import type { ActividadCalendario } from "@/app/(dashboard)/calendario/actions";
-import { obtenerActividades } from "@/app/(dashboard)/calendario/actions";
 
 // ─── Colores por tipo de actividad ───────────────────────────────────────────
 
@@ -127,9 +126,9 @@ export default function CalendarioCliente({
   secciones,
   puedCrear,
 }: CalendarioClienteProps) {
+  const router = useRouter();
   const calendarRef = useRef<FullCalendar>(null);
   const [actividades, setActividades] = useState<ActividadCalendario[]>(actividadesIniciales);
-  const [actividadModal, setActividadModal] = useState<ActividadCalendario | null>(null);
   const [vista, setVista] = useState<"dayGridMonth" | "timeGridWeek" | "listMonth">(
     "dayGridMonth",
   );
@@ -137,14 +136,8 @@ export default function CalendarioCliente({
   const eventos: EventInput[] = actividades.map(actividadAEvento);
 
   function handleEventClick(info: EventClickArg) {
-    const a = info.event.extendedProps["actividad"] as ActividadCalendario;
-    setActividadModal(a);
+    router.push(`/calendario/${info.event.id}`);
   }
-
-  const recargar = useCallback(async () => {
-    const res = await obtenerActividades();
-    if (res.ok) setActividades(res.data);
-  }, []);
 
   function filtrar(tipo: TipoActividad | "", seccion_id: string) {
     setActividades(
@@ -243,12 +236,6 @@ export default function CalendarioCliente({
         ))}
       </div>
 
-      {/* Modal */}
-      <ModalActividad
-        actividad={actividadModal}
-        onClose={() => setActividadModal(null)}
-        onAccionRealizada={recargar}
-      />
     </div>
   );
 }
