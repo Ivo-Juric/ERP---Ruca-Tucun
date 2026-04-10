@@ -10,6 +10,11 @@ import {
   Rol,
 } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
+import {
+  getDisponibilidadItem,
+  getDisponibilidadSemana,
+  getLunesDeSemana,
+} from "@/lib/disponibilidad";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -68,6 +73,34 @@ export type ActividadOpcion = {
   id: string;
   titulo: string;
   fecha_inicio: string;
+};
+
+export type SolicitudActivaRow = {
+  id: string;
+  cantidad: number;
+  cantidad_aprobada: number | null;
+  fecha_uso: string;
+  fecha_devolucion_esperada: string | null;
+  actividad: { titulo: string };
+  solicitado_por: {
+    nombre: string;
+    apellido: string;
+    seccion: { nombre: string } | null;
+  };
+};
+
+export type DisponibilidadSemanaRow = {
+  item: {
+    id: string;
+    nombre: string;
+    descripcion: string | null;
+    categoria: CategoriaInventario;
+    cantidad_total: number;
+  };
+  total: number;
+  ocupado: number;
+  disponible: number;
+  solicitudesActivas: SolicitudActivaRow[];
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -474,16 +507,19 @@ export async function crearSolicitud(data: {
   if (!data.fecha_uso || isNaN(Date.parse(data.fecha_uso)))
     return { ok: false, error: "Fecha de uso inválida." };
 
-  // Verificar disponibilidad
+  // Verificar disponibilidad dinámica para la semana de uso
   const item = await prisma.itemInventario.findUnique({
     where: { id: data.item_id },
-    select: { id: true, cantidad_disponible: true, nombre: true },
+    select: { id: true, nombre: true },
   });
   if (!item) return { ok: false, error: "Ítem no encontrado." };
-  if (data.cantidad > item.cantidad_disponible)
+
+  const semanaInicio = getLunesDeSemana(new Date(data.fecha_uso));
+  const disp = await getDisponibilidadItem(data.item_id, semanaInicio);
+  if (data.cantidad > disp.disponible)
     return {
       ok: false,
-      error: `Solo hay ${item.cantidad_disponible} unidades disponibles de "${item.nombre}".`,
+      error: `Solo hay ${disp.disponible} unidades disponibles esa semana para "${item.nombre}".`,
     };
 
   // SUBJEFE_SECCION: queda en PENDIENTE_JEFE; el resto va directo a PENDIENTE_INTENDENCIA
@@ -570,15 +606,25 @@ export async function aprobarSolicitud(
 
   const solicitud = await prisma.solicitudRecurso.findUnique({
     where: { id },
-    select: { estado: true, cantidad: true, item_id: true, item: { select: { cantidad_disponible: true, nombre: true } } },
+    select: {
+      estado: true,
+      cantidad: true,
+      item_id: true,
+      fecha_uso: true,
+    },
   });
   if (!solicitud) return { ok: false, error: "Solicitud no encontrada." };
   if (solicitud.estado !== EstadoSolicitud.PENDIENTE_INTENDENCIA)
     return { ok: false, error: "Solo se pueden aprobar solicitudes pendientes de intendencia." };
-  if (cantidad_aprobada > solicitud.item.cantidad_disponible)
+
+  // Verificar disponibilidad dinámica para la semana de uso,
+  // excluyendo esta misma solicitud del cálculo.
+  const semanaInicio = getLunesDeSemana(solicitud.fecha_uso);
+  const disp = await getDisponibilidadItem(solicitud.item_id, semanaInicio, id);
+  if (cantidad_aprobada > disp.disponible)
     return {
       ok: false,
-      error: `Solo hay ${solicitud.item.cantidad_disponible} unidades disponibles.`,
+      error: `Cantidad supera la disponibilidad de esa semana (${disp.disponible} disponibles).`,
     };
 
   const nuevoEstado =
@@ -587,15 +633,11 @@ export async function aprobarSolicitud(
       : EstadoSolicitud.APROBADA;
 
   try {
-    await prisma.$transaction(async (tx) => {
-      await tx.solicitudRecurso.update({
-        where: { id },
-        data: { estado: nuevoEstado, cantidad_aprobada },
-      });
-      await tx.itemInventario.update({
-        where: { id: solicitud.item_id },
-        data: { cantidad_disponible: { decrement: cantidad_aprobada } },
-      });
+    // cantidad_disponible en items_inventario no se toca al aprobar;
+    // la disponibilidad real se calcula siempre dinámicamente.
+    await prisma.solicitudRecurso.update({
+      where: { id },
+      data: { estado: nuevoEstado, cantidad_aprobada },
     });
     revalidatePath("/intendencia");
     return { ok: true, data: undefined };
@@ -636,6 +678,67 @@ export async function rechazarSolicitud(
     return { ok: true, data: undefined };
   } catch {
     return { ok: false, error: "Error al rechazar la solicitud." };
+  }
+}
+
+// ─── Disponibilidad dinámica ──────────────────────────────────────────────────
+
+export async function obtenerDisponibilidadSemana(
+  semanaInicioISO: string,
+): Promise<ActionResult<DisponibilidadSemanaRow[]>> {
+  const usuario = await getUsuarioActual();
+  if (!usuario) return { ok: false, error: "No autenticado." };
+  if (!ROLES_VER_INVENTARIO.includes(usuario.rol))
+    return { ok: false, error: "Sin permiso." };
+
+  try {
+    const semanaInicio = new Date(semanaInicioISO);
+    const datos = await getDisponibilidadSemana(semanaInicio);
+
+    return {
+      ok: true,
+      data: datos.map((d) => ({
+        item: {
+          id: d.item.id,
+          nombre: d.item.nombre,
+          descripcion: d.item.descripcion,
+          categoria: d.item.categoria,
+          cantidad_total: d.item.cantidad_total,
+        },
+        total: d.total,
+        ocupado: d.ocupado,
+        disponible: d.disponible,
+        solicitudesActivas: d.solicitudesActivas.map((s) => ({
+          id: s.id,
+          cantidad: s.cantidad,
+          cantidad_aprobada: s.cantidad_aprobada,
+          fecha_uso: s.fecha_uso.toISOString(),
+          fecha_devolucion_esperada: s.fecha_devolucion_esperada
+            ? s.fecha_devolucion_esperada.toISOString()
+            : null,
+          actividad: s.actividad,
+          solicitado_por: s.solicitado_por,
+        })),
+      })),
+    };
+  } catch {
+    return { ok: false, error: "Error al obtener disponibilidad." };
+  }
+}
+
+export async function consultarDisponibilidadItem(
+  itemId: string,
+  fechaUsoISO: string,
+): Promise<ActionResult<{ total: number; ocupado: number; disponible: number }>> {
+  const usuario = await getUsuarioActual();
+  if (!usuario) return { ok: false, error: "No autenticado." };
+
+  try {
+    const semanaInicio = getLunesDeSemana(new Date(fechaUsoISO));
+    const disp = await getDisponibilidadItem(itemId, semanaInicio);
+    return { ok: true, data: disp };
+  } catch {
+    return { ok: false, error: "Error al consultar disponibilidad." };
   }
 }
 

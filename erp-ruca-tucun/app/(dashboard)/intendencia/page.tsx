@@ -5,6 +5,7 @@ import {
   Package,
   ClipboardList,
   ArrowLeftRight,
+  BarChart2,
 } from "lucide-react";
 import { getUsuarioActual, checkPermiso } from "@/lib/auth";
 import {
@@ -15,6 +16,7 @@ import {
 import FormularioItem from "@/components/modulos/intendencia/FormularioItem";
 import FormularioSolicitud from "@/components/modulos/intendencia/FormularioSolicitud";
 import AccionesSolicitud from "@/components/modulos/intendencia/AccionesSolicitud";
+import DisponibilidadSemanal from "@/components/modulos/intendencia/DisponibilidadSemanal";
 import type {
   CategoriaInventario,
   EstadoConservacion,
@@ -24,7 +26,7 @@ import type {
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
-const TABS = ["inventario", "solicitudes", "prestamos"] as const;
+const TABS = ["disponibilidad", "inventario", "solicitudes", "prestamos"] as const;
 type Tab = (typeof TABS)[number];
 
 const ROLES_VER_INVENTARIO: Rol[] = [
@@ -125,7 +127,7 @@ export default async function IntendenciaPage({ searchParams }: PageProps) {
   const puedeSolicitar = ROLES_SOLICITAR.includes(usuario.rol);
 
   // Tab por defecto según rol
-  const defaultTab: Tab = puedeVerInventario ? "inventario" : "solicitudes";
+  const defaultTab: Tab = puedeVerInventario ? "disponibilidad" : "solicitudes";
   const tabActual: Tab = TABS.includes(searchParams.tab as Tab)
     ? (searchParams.tab as Tab)
     : defaultTab;
@@ -134,6 +136,11 @@ export default async function IntendenciaPage({ searchParams }: PageProps) {
   const tabsVisibles: { id: Tab; label: string; icon: React.ReactNode }[] = [
     ...(puedeVerInventario
       ? [
+          {
+            id: "disponibilidad" as Tab,
+            label: "Disponibilidad",
+            icon: <BarChart2 size={14} />,
+          },
           {
             id: "inventario" as Tab,
             label: "Inventario",
@@ -218,6 +225,11 @@ export default async function IntendenciaPage({ searchParams }: PageProps) {
           </Link>
         ))}
       </div>
+
+      {/* ── Tab: Disponibilidad ──────────────────────────────────────────── */}
+      {tabActual === "disponibilidad" && puedeVerInventario && (
+        <DisponibilidadSemanal />
+      )}
 
       {/* ── Tab: Inventario ─────────────────────────────────────────────────── */}
       {tabActual === "inventario" && puedeVerInventario && (
