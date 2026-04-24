@@ -2,7 +2,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { getUsuarioActual } from "@/lib/auth";
-import type { Rol } from "@prisma/client";
+import type { Rol, TipoActividad } from "@prisma/client";
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -68,13 +68,11 @@ function tipoAgrupacionDeRol(rol: Rol): string | null {
 
 function agruparPorMes(
   asistencias: { presente: boolean; fecha: Date }[],
-  anio: number,
 ): DatoMensual[] {
   const porMes: Record<number, { presentes: number; total: number }> = {};
   for (let i = 0; i < 12; i++) porMes[i] = { presentes: 0, total: 0 };
 
   for (const a of asistencias) {
-    if (a.fecha.getFullYear() !== anio) continue;
     const m = a.fecha.getMonth();
     porMes[m]!.total++;
     if (a.presente) porMes[m]!.presentes++;
@@ -97,14 +95,18 @@ function agruparPorMes(
 export async function obtenerAsistenciaMensual(filtros?: {
   seccion_id?: string;
   agrupacion_tipo?: string;
+  tipos?: string[];
+  desde?: string;
+  hasta?: string;
 }): Promise<{ ok: true; data: DatoMensual[] } | { ok: false; error: string }> {
   const usuario = await getUsuarioActual();
   if (!usuario) return { ok: false, error: "No autenticado." };
 
   const anio = new Date().getFullYear();
+  const desde = filtros?.desde ? new Date(filtros.desde) : new Date(`${anio}-01-01`);
+  const hasta = filtros?.hasta ? new Date(filtros.hasta) : new Date(`${anio}-12-31`);
 
   try {
-    // Construir filtro de actividades según el scope
     let seccionIds: string[] | undefined;
 
     if (filtros?.seccion_id) {
@@ -121,10 +123,8 @@ export async function obtenerAsistenciaMensual(filtros?: {
       where: {
         actividad: {
           estado: "REALIZADA",
-          fecha_inicio: {
-            gte: new Date(`${anio}-01-01`),
-            lte: new Date(`${anio}-12-31`),
-          },
+          fecha_inicio: { gte: desde, lte: hasta },
+          ...(filtros?.tipos?.length ? { tipo: { in: filtros.tipos as TipoActividad[] } } : {}),
           ...(seccionIds ? { seccion_id: { in: seccionIds } } : {}),
         },
       },
@@ -139,7 +139,7 @@ export async function obtenerAsistenciaMensual(filtros?: {
       fecha: a.actividad.fecha_inicio,
     }));
 
-    return { ok: true, data: agruparPorMes(flat, anio) };
+    return { ok: true, data: agruparPorMes(flat) };
   } catch {
     return { ok: false, error: "Error al obtener datos de asistencia." };
   }
@@ -254,22 +254,24 @@ export async function obtenerResumenInventario(): Promise<
 
 // ─── Actividades ──────────────────────────────────────────────────────────────
 
-export async function obtenerActividadGeneral(): Promise<
-  { ok: true; data: FilaActividad[] } | { ok: false; error: string }
-> {
+export async function obtenerActividadGeneral(filtros?: {
+  tipos?: string[];
+  desde?: string;
+  hasta?: string;
+}): Promise<{ ok: true; data: FilaActividad[] } | { ok: false; error: string }> {
   const usuario = await getUsuarioActual();
   if (!usuario) return { ok: false, error: "No autenticado." };
 
   const anio = new Date().getFullYear();
+  const desde = filtros?.desde ? new Date(filtros.desde) : new Date(`${anio}-01-01`);
+  const hasta = filtros?.hasta ? new Date(filtros.hasta) : new Date(`${anio}-12-31`);
 
   try {
     const actividades = await prisma.actividad.findMany({
       where: {
         estado: "REALIZADA",
-        fecha_inicio: {
-          gte: new Date(`${anio}-01-01`),
-          lte: new Date(`${anio}-12-31`),
-        },
+        fecha_inicio: { gte: desde, lte: hasta },
+        ...(filtros?.tipos?.length ? { tipo: { in: filtros.tipos as TipoActividad[] } } : {}),
       },
       include: {
         seccion: { select: { nombre: true } },

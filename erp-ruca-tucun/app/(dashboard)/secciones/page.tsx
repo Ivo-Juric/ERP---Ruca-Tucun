@@ -153,7 +153,7 @@ export default async function SeccionesPage() {
         <div>
           <h1 className="text-2xl font-bold text-white">Secciones</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Organigrama de Grupo Scout Ruca Tucún —{" "}
+            Organigrama Ruca Tucún —{" "}
             <span className="text-ruca-yellow">{totalSecciones} secciones</span>,{" "}
             <span className="text-ruca-yellow">{totalMiembros} miembros activos</span>
           </p>

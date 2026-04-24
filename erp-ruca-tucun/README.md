@@ -1,6 +1,6 @@
 # ERP Ruca Tucún
 
-Sistema de gestión interna del **Grupo Scout Ruca Tucún**. Cubre comunicación interna, calendario de actividades, control de asistencia, formación doctrinal, gestión de inventario y recursos, reportes y administración de usuarios.
+Sistema de gestión interna de **Ruca Tucún**. Cubre comunicación interna, calendario de actividades, control de asistencia, formación doctrinal, gestión de inventario y recursos, reportes y administración de usuarios.
 
 ---
 

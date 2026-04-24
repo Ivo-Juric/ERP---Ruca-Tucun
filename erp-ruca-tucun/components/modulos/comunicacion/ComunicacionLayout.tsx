@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Hash, MessageSquare, Plus, Users, X } from "lucide-react";
+import { Hash, MessageSquare, Plus, Search, Users, X } from "lucide-react";
 import type {
   CanalConAcceso,
   ConversacionDM,
@@ -28,6 +28,29 @@ function iniciales(nombre: string, apellido: string): string {
   return `${nombre[0] ?? ""}${apellido[0] ?? ""}`.toUpperCase();
 }
 
+const LABEL_ROL: Record<string, string> = {
+  JEFE_RUCA: "Jefe de Ruca",
+  SECRETARIO: "Secretario",
+  JEFE_INTENDENCIA: "Jefe de Intendencia",
+  SUBJEFE_INTENDENCIA: "Subjefe de Intendencia",
+  JEFE_COMUNICACIONES: "Jefe de Comunicaciones",
+  SUBJEFE_COMUNICACIONES: "Subjefe de Comunicaciones",
+  JEFE_FDOC: "Jefe de Formación Doctrinal",
+  SUBJEFE_FDOC: "Subjefe de Formación Doctrinal",
+  JEFE_MILICIANOS: "Jefe de Milicianos",
+  JEFE_AGRUP_MASCULINA: "Jefe de Agrupación Masculina",
+  JEFE_AGRUP_FEMENINA: "Jefe de Agrupación Femenina",
+};
+
+function describir(u: UsuarioBasico): string {
+  if (u.rol === "JEFE_SECCION" || u.rol === "SUBJEFE_SECCION") {
+    const prefijo = u.rol === "JEFE_SECCION" ? "Jefe" : "Subjefe";
+    const seccion = u.seccion?.nombre ?? "Sección";
+    return `${prefijo} de ${seccion}`;
+  }
+  return LABEL_ROL[u.rol] ?? u.rol.replace(/_/g, " ");
+}
+
 export default function ComunicacionLayout({
   canalesIniciales,
   conversacionesIniciales,
@@ -42,10 +65,12 @@ export default function ComunicacionLayout({
   const [mostrarSelector, setMostrarSelector] = useState(false);
   const [usuarios, setUsuarios] = useState<UsuarioBasico[]>([]);
   const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
 
   const haySeleccion = seleccion !== null;
 
   const handleAbrirSelector = useCallback(async () => {
+    setBusqueda("");
     setMostrarSelector(true);
     if (usuarios.length === 0) {
       setCargandoUsuarios(true);
@@ -96,7 +121,22 @@ export default function ComunicacionLayout({
                 <X size={18} />
               </button>
             </div>
-            <div className="max-h-80 overflow-y-auto p-2">
+            {/* Buscador */}
+            <div className="border-b border-ruca-gray-light px-3 py-2">
+              <div className="flex items-center gap-2 rounded-lg border border-ruca-gray-light bg-ruca-gray px-3 py-2">
+                <Search size={14} className="flex-none text-gray-500" />
+                <input
+                  type="text"
+                  placeholder="Buscar persona..."
+                  value={busqueda}
+                  onChange={(e) => setBusqueda(e.target.value)}
+                  className="flex-1 bg-transparent text-sm text-white placeholder-gray-600 outline-none"
+                  autoFocus
+                />
+              </div>
+            </div>
+
+            <div className="max-h-72 overflow-y-auto p-2">
               {cargandoUsuarios ? (
                 <div className="py-10 text-center text-sm text-gray-500">
                   Cargando usuarios...
@@ -106,25 +146,41 @@ export default function ComunicacionLayout({
                   No hay otros usuarios activos.
                 </div>
               ) : (
-                usuarios.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => handleSeleccionarUsuario(u)}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-ruca-gray-light"
-                  >
-                    <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ruca-yellow text-xs font-bold text-ruca-black">
-                      {iniciales(u.nombre, u.apellido)}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium text-white">
-                        {u.nombre} {u.apellido}
+                (() => {
+                  const filtrados = busqueda.trim()
+                    ? usuarios.filter((u) =>
+                        `${u.nombre} ${u.apellido}`
+                          .toLowerCase()
+                          .includes(busqueda.toLowerCase()),
+                      )
+                    : usuarios;
+
+                  if (filtrados.length === 0) {
+                    return (
+                      <div className="py-8 text-center text-sm text-gray-500">
+                        Sin resultados para &ldquo;{busqueda}&rdquo;
                       </div>
-                      <div className="text-xs text-gray-500">
-                        {u.rol.replace(/_/g, " ")}
+                    );
+                  }
+
+                  return filtrados.map((u) => (
+                    <button
+                      key={u.id}
+                      onClick={() => handleSeleccionarUsuario(u)}
+                      className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-ruca-gray-light"
+                    >
+                      <div className="flex h-9 w-9 flex-none items-center justify-center rounded-full bg-ruca-yellow text-xs font-bold text-ruca-black">
+                        {iniciales(u.nombre, u.apellido)}
                       </div>
-                    </div>
-                  </button>
-                ))
+                      <div>
+                        <div className="text-sm font-medium text-white">
+                          {u.nombre} {u.apellido}
+                        </div>
+                        <div className="text-xs text-gray-500">{describir(u)}</div>
+                      </div>
+                    </button>
+                  ));
+                })()
               )}
             </div>
           </div>

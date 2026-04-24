@@ -49,9 +49,9 @@ export default async function DashboardLayout({
   return (
   <UserProvider usuario={usuarioContexto}>
     <NotificacionesProvider>
-      <div className="flex min-h-screen bg-ruca-black">
+      <div className="flex h-screen overflow-hidden bg-ruca-black">
         <Sidebar />
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col min-h-0">
           <TopBar />
           <main className="flex-1 overflow-y-auto px-4 py-6 pt-20 md:px-8 md:pt-6 pb-20 md:pb-6">
             {children}

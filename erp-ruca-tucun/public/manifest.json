@@ -1,7 +1,7 @@
 {
   "name": "Ruca Tucún ERP",
   "short_name": "Ruca Tucún",
-  "description": "Sistema de gestión interna del Grupo Scout Ruca Tucún",
+  "description": "Sistema de gestión interna de Ruca Tucún",
   "start_url": "/dashboard",
   "display": "standalone",
   "orientation": "portrait-primary",

@@ -91,6 +91,7 @@ export type UsuarioBasico = {
   apellido: string;
   rol: string;
   foto_url: string | null;
+  seccion: { nombre: string } | null;
 };
 
 // ─── Roles con permisos especiales ──────────────────────────────────────────
@@ -367,6 +368,7 @@ export async function obtenerUsuarios(): Promise<ActionResult<UsuarioBasico[]>> 
         apellido: true,
         rol: true,
         foto_url: true,
+        seccion: { select: { nombre: true } },
       },
       orderBy: [{ apellido: "asc" }, { nombre: "asc" }],
     });

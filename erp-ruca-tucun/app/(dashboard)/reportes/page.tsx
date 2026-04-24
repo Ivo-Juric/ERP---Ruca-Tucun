@@ -11,24 +11,14 @@ import {
   obtenerActividadGeneral,
   obtenerMiembrosConAsistencia,
 } from "./actions";
-import GraficoAsistencia from "@/components/modulos/reportes/GraficoAsistencia";
 import TablaReporte from "@/components/modulos/reportes/TablaReporte";
+import SeccionAsistenciaCliente from "./SeccionAsistenciaCliente";
+import SeccionActividadesCliente from "./SeccionActividadesCliente";
 import type { TabReporte } from "./actions";
 
 interface PageProps {
   searchParams: { tab?: string };
 }
-
-const LABEL_TIPO: Record<string, string> = {
-  SABADO: "Sábado",
-  CAMPAMENTO: "Campamento",
-  JORNADA_FORMACION: "Jornada FDoc",
-  JORNADA_JEFES: "Jornada Jefes",
-  REUNION_JEFES: "Reunión Jefes",
-  RETIRO: "Retiro",
-  MISA: "Misa",
-  EXTRAORDINARIA: "Extraordinaria",
-};
 
 const LABEL_ESTADO: Record<string, string> = {
   ACTIVO: "Activo",
@@ -62,7 +52,8 @@ export default async function ReportesPage({ searchParams }: PageProps) {
   const tabActual: TabReporte =
     tabs.find((t) => t.id === searchParams.tab) ?? tabs[0]!;
 
-  // Fetch según tab
+  const anio = new Date().getFullYear();
+
   const [asistenciaRes, fdocRes, inventarioRes, actividadRes, miembrosRes] =
     await Promise.all([
       tabActual.id.startsWith("asistencia")
@@ -87,8 +78,6 @@ export default async function ReportesPage({ searchParams }: PageProps) {
         ? obtenerMiembrosConAsistencia(tabActual.seccion_id)
         : Promise.resolve(null),
     ]);
-
-  const anio = new Date().getFullYear();
 
   return (
     <div className="mx-auto max-w-6xl space-y-6">
@@ -117,35 +106,18 @@ export default async function ReportesPage({ searchParams }: PageProps) {
 
       {/* Contenido */}
       <div className="space-y-6">
-        {/* ── Asistencia ──────────────────────────────────────────────────── */}
+        {/* ── Asistencia (con filtros cliente) ──────────────────────────────── */}
         {tabActual.id.startsWith("asistencia") && (
           <>
             {asistenciaRes && !asistenciaRes.ok ? (
               <ErrorBox mensaje={asistenciaRes.error} />
             ) : asistenciaRes?.ok ? (
-              <>
-                <GraficoAsistencia
-                  datos={asistenciaRes.data}
-                  titulo={`Asistencia mensual ${anio}`}
-                  periodo={String(anio)}
-                />
-                <TablaReporte
-                  titulo="Asistencia por mes"
-                  nombreArchivo={`asistencia-${anio}`}
-                  columnas={[
-                    { key: "mes", label: "Mes" },
-                    { key: "presentes", label: "Presentes" },
-                    { key: "total", label: "Total" },
-                    { key: "porcentaje", label: "%" },
-                  ]}
-                  datos={asistenciaRes.data.map((d) => ({
-                    mes: d.mes,
-                    presentes: d.presentes,
-                    total: d.total,
-                    porcentaje: `${d.porcentaje}%`,
-                  }))}
-                />
-              </>
+              <SeccionAsistenciaCliente
+                tabActual={tabActual}
+                datosIniciales={asistenciaRes.data}
+                tituloInicial={`Asistencia mensual ${anio}`}
+                periodoInicial={String(anio)}
+              />
             ) : null}
           </>
         )}
@@ -209,30 +181,15 @@ export default async function ReportesPage({ searchParams }: PageProps) {
           </>
         )}
 
-        {/* ── Actividades ─────────────────────────────────────────────────── */}
+        {/* ── Actividades (con filtros cliente) ───────────────────────────── */}
         {tabActual.id === "actividades" && (
           <>
             {actividadRes && !actividadRes.ok ? (
               <ErrorBox mensaje={actividadRes.error} />
             ) : actividadRes?.ok ? (
-              <TablaReporte
-                titulo={`Actividades realizadas ${anio}`}
-                nombreArchivo={`actividades-${anio}`}
-                columnas={[
-                  { key: "titulo", label: "Título" },
-                  { key: "tipo", label: "Tipo" },
-                  { key: "fecha", label: "Fecha" },
-                  { key: "seccion", label: "Sección" },
-                  { key: "asistencia_pct", label: "% Asistencia" },
-                ]}
-                datos={actividadRes.data.map((d) => ({
-                  titulo: d.titulo,
-                  tipo: LABEL_TIPO[d.tipo] ?? d.tipo,
-                  fecha: new Date(d.fecha).toLocaleDateString("es-AR"),
-                  seccion: d.seccion,
-                  asistencia_pct:
-                    d.asistencia_pct !== null ? `${d.asistencia_pct}%` : "—",
-                }))}
+              <SeccionActividadesCliente
+                datosIniciales={actividadRes.data}
+                anioInicial={anio}
               />
             ) : null}
           </>

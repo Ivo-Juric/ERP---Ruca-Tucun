@@ -14,7 +14,13 @@ export async function createServerComponentClient() {
       },
       setAll(cookiesToSet) {
         cookiesToSet.forEach(({ name, value, options }) => {
-          cookieStore.set(name, value, options)
+          cookieStore.set(name, value, {
+            ...options,
+            maxAge: 60 * 60,
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+          })
         })
       },
     },

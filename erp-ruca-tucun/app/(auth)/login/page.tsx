@@ -1,3 +1,4 @@
+import { AlertCircle } from "lucide-react";
 import { loginAction } from "@/app/(auth)/actions";
 
 // ─── Ícono: estrella de 8 puntas ─────────────────────────────────────────────
@@ -31,6 +32,7 @@ function EstrellaSVG() {
 const ERRORES: Record<string, string> = {
   credenciales_invalidas: "Email o contraseña incorrectos.",
   error_servidor: "Error del servidor. Intentá de nuevo en unos momentos.",
+  sin_acceso: "Tu cuenta no tiene acceso al sistema. Consultá al Jefe de Ruca o al Administrador (Ivo).",
 };
 
 // ─── Página ───────────────────────────────────────────────────────────────────
@@ -62,8 +64,9 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
 
           {/* Error */}
           {mensajeError && (
-            <div className="mb-5 rounded-lg border border-red-500/40 bg-red-950/50 px-4 py-3 text-sm text-red-400">
-              {mensajeError}
+            <div className="mb-5 flex items-start gap-2.5 rounded-lg border border-red-500/60 bg-red-950/60 px-4 py-3 text-sm text-red-300">
+              <AlertCircle size={16} className="mt-0.5 flex-none text-red-400" />
+              <span>{mensajeError}</span>
             </div>
           )}
 

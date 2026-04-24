@@ -15,7 +15,7 @@ const geistMono = localFont({
 
 export const metadata: Metadata = {
   title: "ERP Ruca Tucún",
-  description: "Sistema de gestión interna del Grupo Scout Ruca Tucún",
+  description: "Sistema de gestión interna de Ruca Tucún",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

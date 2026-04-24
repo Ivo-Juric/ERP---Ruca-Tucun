@@ -106,7 +106,7 @@ export default function CampanaNotificaciones() {
 
       {/* Dropdown */}
       {abierto && (
-        <div className="absolute right-0 top-full z-50 mt-2 w-80 rounded-2xl border border-ruca-gray-light bg-ruca-gray shadow-2xl">
+        <div className="absolute top-full z-50 mt-2 w-80 rounded-2xl border border-ruca-gray-light bg-ruca-gray shadow-2xl left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-0">
           {/* Header */}
           <div className="flex items-center justify-between border-b border-ruca-gray-light px-4 py-3">
             <h3 className="text-sm font-semibold text-white">Notificaciones</h3>

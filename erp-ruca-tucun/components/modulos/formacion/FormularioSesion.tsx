@@ -220,7 +220,7 @@ export default function FormularioSesion({
                     name="tema"
                     type="text"
                     required
-                    placeholder="Ej: Historia del grupo scout..."
+                    placeholder="Ej: Historia de Ruca Tucún..."
                     className="w-full rounded-xl border border-ruca-gray-light bg-ruca-black px-4 py-2.5 text-sm text-white placeholder:text-gray-600 focus:border-ruca-yellow focus:outline-none"
                   />
                 </div>
