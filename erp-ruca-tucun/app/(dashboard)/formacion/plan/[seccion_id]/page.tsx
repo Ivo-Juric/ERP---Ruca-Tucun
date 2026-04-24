@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import Link from "next/link";
 import { redirect, notFound } from "next/navigation";
 import { ChevronLeft, Check, Circle, Calendar } from "lucide-react";

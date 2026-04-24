@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Users, BookOpen, Building2 } from "lucide-react";

@@ -13,6 +13,7 @@ const RUTAS_PROTEGIDAS = [
   "/secciones",
   "/reportes",
   "/admin",
+  "/notificaciones",
 ];
 
 function esRutaProtegida(pathname: string): boolean {
@@ -46,18 +47,18 @@ export async function middleware(req: NextRequest) {
   );
 
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { pathname } = req.nextUrl;
 
   // Ya autenticado intentando entrar a /login → ir al dashboard
-  if (session && pathname === "/login") {
+  if (user && pathname === "/login") {
     return NextResponse.redirect(new URL("/dashboard", req.url));
   }
 
   // Sin sesión intentando acceder a ruta protegida → ir a /login
-  if (!session && esRutaProtegida(pathname)) {
+  if (!user && esRutaProtegida(pathname)) {
     const loginUrl = new URL("/login", req.url);
     loginUrl.searchParams.set("redirect", pathname);
     return NextResponse.redirect(loginUrl);
@@ -77,6 +78,7 @@ export const config = {
     "/secciones/:path*",
     "/reportes/:path*",
     "/admin/:path*",
+    "/notificaciones/:path*",
     "/login",
   ],
 };

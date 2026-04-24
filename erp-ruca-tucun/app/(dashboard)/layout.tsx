@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getUsuarioActual } from "@/lib/auth";
 import { UserProvider, type UsuarioContexto } from "@/components/layout/UserContext";
+import { NotificacionesProvider } from "@/components/layout/NotificacionesContext";
 import Sidebar from "@/components/layout/Sidebar";
 import TopBar from "@/components/layout/TopBar";
 import BottomNav from "@/components/layout/BottomNav";
@@ -47,16 +48,18 @@ export default async function DashboardLayout({
 
   return (
   <UserProvider usuario={usuarioContexto}>
-    <div className="flex min-h-screen bg-ruca-black">
-      <Sidebar />
-      <div className="flex flex-1 flex-col">
-        <TopBar />
-        <main className="flex-1 overflow-y-auto px-4 py-6 pt-20 md:px-8 md:pt-6 pb-20 md:pb-6">
-          {children}
-        </main>
-        <BottomNav />
+    <NotificacionesProvider>
+      <div className="flex min-h-screen bg-ruca-black">
+        <Sidebar />
+        <div className="flex flex-1 flex-col">
+          <TopBar />
+          <main className="flex-1 overflow-y-auto px-4 py-6 pt-20 md:px-8 md:pt-6 pb-20 md:pb-6">
+            {children}
+          </main>
+          <BottomNav />
+        </div>
       </div>
-    </div>
+    </NotificacionesProvider>
   </UserProvider>
 );
 }

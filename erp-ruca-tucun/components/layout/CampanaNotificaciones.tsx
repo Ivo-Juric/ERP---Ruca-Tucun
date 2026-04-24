@@ -3,13 +3,8 @@
 import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Bell, Info, AlertTriangle, CheckCircle, BellOff, CheckCheck } from "lucide-react";
-import { createClientComponentClient } from "@/lib/supabase";
-import {
-  obtenerNotificaciones,
-  marcarLeida,
-  marcarTodasLeidas,
-} from "@/lib/notificaciones";
-import { useUsuario } from "./UserContext";
+import { marcarLeida, marcarTodasLeidas } from "@/lib/notificaciones";
+import { useNotificaciones } from "./NotificacionesContext";
 import type { NotificacionPublica, TipoNotificacion } from "@/lib/notificaciones";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -34,68 +29,13 @@ const ICONO_TIPO: Record<TipoNotificacion, React.ReactNode> = {
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export default function CampanaNotificaciones() {
-  const usuario = useUsuario();
   const router = useRouter();
+  const { notificaciones, sinLeer, cargar, actualizarNotificacion, marcarTodasComoLeidas } =
+    useNotificaciones();
 
-  const [notificaciones, setNotificaciones] = useState<NotificacionPublica[]>([]);
-  const [sinLeer, setSinLeer] = useState(0);
   const [abierto, setAbierto] = useState(false);
   const [, startTransition] = useTransition();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Supabase client estable — no se recrea entre renders
-  const [supabase] = useState(() => createClientComponentClient());
-  // Ref para el canal activo — permite cleanup síncrono antes de re-suscribir
-  const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
-
-  // ── Carga inicial ──────────────────────────────────────────────────────────
-
-  async function cargar() {
-    const res = await obtenerNotificaciones();
-    if (res.ok) {
-      setNotificaciones(res.data);
-      setSinLeer(res.sinLeer);
-    }
-  }
-
-  // ── Realtime ───────────────────────────────────────────────────────────────
-
-  useEffect(() => {
-    void cargar();
-
-    const channelName = `notificaciones-${usuario.id}`;
-
-    // Remover canal si ya existe con ese nombre
-    supabase.getChannels().forEach((ch) => {
-      if (ch.topic === `realtime:${channelName}`) {
-        void supabase.removeChannel(ch);
-      }
-    });
-
-    const channel = supabase
-      .channel(channelName)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "notificaciones",
-          filter: `usuario_id=eq.${usuario.id}`,
-        },
-        () => {
-          void cargar();
-        },
-      )
-      .subscribe();
-
-    channelRef.current = channel;
-
-    return () => {
-      void supabase.removeChannel(channel);
-      channelRef.current = null;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [usuario.id]);
 
   // ── Cierre al hacer click fuera ────────────────────────────────────────────
 
@@ -119,17 +59,17 @@ export default function CampanaNotificaciones() {
   // ── Acciones ───────────────────────────────────────────────────────────────
 
   function handleAbrir() {
-    setAbierto((v) => !v);
+    setAbierto((v) => {
+      if (!v) void cargar(); // refresca al abrir
+      return !v;
+    });
   }
 
   function handleClickNotificacion(n: NotificacionPublica) {
     if (!n.leida) {
       startTransition(async () => {
         await marcarLeida(n.id);
-        setNotificaciones((prev) =>
-          prev.map((x) => (x.id === n.id ? { ...x, leida: true } : x)),
-        );
-        setSinLeer((prev) => Math.max(0, prev - 1));
+        actualizarNotificacion(n.id, { leida: true });
       });
     }
     if (n.url_destino) {
@@ -141,8 +81,7 @@ export default function CampanaNotificaciones() {
   function handleMarcarTodasLeidas() {
     startTransition(async () => {
       await marcarTodasLeidas();
-      setNotificaciones((prev) => prev.map((n) => ({ ...n, leida: true })));
-      setSinLeer(0);
+      marcarTodasComoLeidas();
     });
   }
 

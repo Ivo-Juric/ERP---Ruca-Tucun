@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { redirect } from "next/navigation";
 import { getUsuarioActual, checkPermiso } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";

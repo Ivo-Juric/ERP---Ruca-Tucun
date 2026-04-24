@@ -1,3 +1,5 @@
+export const revalidate = 60;
+
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, UserCircle2 } from "lucide-react";

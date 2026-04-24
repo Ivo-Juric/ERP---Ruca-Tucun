@@ -99,34 +99,34 @@ export async function obtenerDashboardData(): Promise<DashboardData | null> {
       }
     : null;
 
-  // ── Asistencia del mes ───────────────────────────────────────────────────
+  // ── Asistencia del mes (solo secciones y roles globales) ────────────────
 
   const mesInicio = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
   const mesFin = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
 
-  const asistenciasDelMes = await prisma.asistencia.findMany({
-    where: {
-      actividad: {
-        estado: "REALIZADA",
-        fecha_inicio: { gte: mesInicio, lte: mesFin },
-        ...(seccionId && !esGlobal ? { seccion_id: seccionId } : {}),
-      },
-    },
-    select: { presente: true },
-  });
+  let asistencia: WidgetAsistencia = null;
 
-  const totalAsist = asistenciasDelMes.length;
-  const presentesAsist = asistenciasDelMes.filter((a) => a.presente).length;
+  if (seccionId || esGlobal) {
+    const filtroActividad = {
+      estado: "REALIZADA" as const,
+      fecha_inicio: { gte: mesInicio, lte: mesFin },
+      ...(seccionId && !esGlobal ? { seccion_id: seccionId } : {}),
+    };
 
-  const asistencia: WidgetAsistencia =
-    totalAsist > 0
-      ? {
-          porcentaje: Math.round((presentesAsist / totalAsist) * 100),
-          presentes: presentesAsist,
-          total: totalAsist,
-          etiqueta: esGlobal ? "Asistencia global este mes" : "Asistencia sección este mes",
-        }
-      : null;
+    const [totalAsist, presentesAsist] = await Promise.all([
+      prisma.asistencia.count({ where: { actividad: filtroActividad } }),
+      prisma.asistencia.count({ where: { presente: true, actividad: filtroActividad } }),
+    ]);
+
+    if (totalAsist > 0) {
+      asistencia = {
+        porcentaje: Math.round((presentesAsist / totalAsist) * 100),
+        presentes: presentesAsist,
+        total: totalAsist,
+        etiqueta: esGlobal ? "Asistencia global este mes" : "Asistencia sección este mes",
+      };
+    }
+  }
 
   // ── FDoc del plan anual ──────────────────────────────────────────────────
 
@@ -173,17 +173,15 @@ export async function obtenerDashboardData(): Promise<DashboardData | null> {
   const alertas: Alerta[] = [];
 
   if (esGlobal || esIntendencia) {
-    // Stock bajo
-    const itemsConStockBajo = await prisma.itemInventario.findMany({
-      select: { nombre: true, cantidad_disponible: true, stock_minimo: true },
-    });
-    const stockBajo = itemsConStockBajo.filter(
-      (i) => i.cantidad_disponible <= i.stock_minimo,
-    );
-    if (stockBajo.length > 0) {
+    const stockBajoCount = await prisma.$queryRaw<[{ count: bigint }]>`
+      SELECT COUNT(*) as count FROM "items_inventario"
+      WHERE cantidad_disponible <= stock_minimo
+    `;
+    const stockBajo = Number(stockBajoCount[0]?.count ?? 0);
+    if (stockBajo > 0) {
       alertas.push({
         tipo: "stock",
-        mensaje: `${stockBajo.length} ítem${stockBajo.length !== 1 ? "s" : ""} con stock bajo en inventario.`,
+        mensaje: `${stockBajo} ítem${stockBajo !== 1 ? "s" : ""} con stock bajo en inventario.`,
       });
     }
   }

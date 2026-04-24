@@ -1,11 +1,15 @@
+export const revalidate = 60;
+
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, MapPin, Calendar, User } from "lucide-react";
+import { ArrowLeft, MapPin, Calendar, User, Pencil } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { getUsuarioActual, checkPermiso } from "@/lib/auth";
+import { puedeEditarActividad } from "@/lib/calendario-permisos";
 import { EstadoActividad, TipoActividad, Rol } from "@prisma/client";
 import RegistroAsistencia from "@/components/modulos/miembros/RegistroAsistencia";
 import MarcarRealizadaBtn from "@/components/modulos/calendario/MarcarRealizadaBtn";
+import EliminarActividadBtn from "./EliminarActividadBtn";
 
 // ─── Mapas de etiquetas y colores ────────────────────────────────────────────
 
@@ -87,6 +91,7 @@ export default async function CalendarioDetallePage({
       lugar: true,
       seccion_id: true,
       agrupacion_id: true,
+      creado_por_id: true,
       seccion: {
         select: {
           id: true,
@@ -106,7 +111,10 @@ export default async function CalendarioDetallePage({
   const u = usuario;
   const act = actividad;
 
-  const puedeEditar = checkPermiso(u.rol, "CALENDARIO", "editar");
+  const puedeEditar =
+    checkPermiso(u.rol, "CALENDARIO", "editar") && puedeEditarActividad(u, act);
+  const puedeEliminar =
+    checkPermiso(u.rol, "CALENDARIO", "eliminar") && puedeEditarActividad(u, act);
 
   let puedeGestionarSeccion = false;
   if (act.seccion_id) {
@@ -163,8 +171,29 @@ export default async function CalendarioDetallePage({
           )}
         </div>
 
-        {/* Título */}
-        <h1 className="text-2xl font-bold text-white">{act.titulo}</h1>
+        {/* Título + acciones */}
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-bold text-white">{act.titulo}</h1>
+          {(puedeEditar || puedeEliminar) && (
+            <div className="flex flex-none items-center gap-2">
+              {puedeEditar && (
+                <Link
+                  href={`/calendario/${act.id}/editar`}
+                  className="flex items-center gap-1.5 rounded-lg border border-ruca-gray-light px-3 py-1.5 text-xs font-medium text-ruca-yellow hover:bg-ruca-gray-light"
+                >
+                  <Pencil size={12} />
+                  Editar
+                </Link>
+              )}
+              {puedeEliminar && (
+                <EliminarActividadBtn
+                  actividadId={act.id}
+                  titulo={act.titulo}
+                />
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Meta */}
         <div className="space-y-2">

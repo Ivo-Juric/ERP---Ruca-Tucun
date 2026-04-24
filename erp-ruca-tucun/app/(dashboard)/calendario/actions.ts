@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
 import { getUsuarioActual, checkPermiso } from "@/lib/auth";
+import { puedeEditarActividad } from "@/lib/calendario-permisos";
 import { EstadoActividad, TipoActividad, Rol } from "@prisma/client";
 import type { Prisma } from "@prisma/client";
 
@@ -254,6 +255,109 @@ export async function cancelarActividad(id: string): Promise<ActionResult<undefi
     return { ok: true, data: undefined };
   } catch {
     return { ok: false, error: "Error al cancelar la actividad." };
+  }
+}
+
+export interface EditarActividadData {
+  titulo: string;
+  tipo: TipoActividad;
+  estado: EstadoActividad;
+  fecha_inicio: string;
+  fecha_fin: string;
+  lugar: string | null;
+  descripcion: string | null;
+}
+
+export async function editarActividad(
+  id: string,
+  data: EditarActividadData,
+): Promise<ActionResult<undefined>> {
+  const usuario = await getUsuarioActual();
+  if (!usuario) return { ok: false, error: "No autenticado." };
+  if (!checkPermiso(usuario.rol, "CALENDARIO", "editar"))
+    return { ok: false, error: "Sin permiso para editar actividades." };
+
+  const actividad = await prisma.actividad.findUnique({
+    where: { id },
+    select: {
+      creado_por_id: true,
+      seccion_id: true,
+      agrupacion_id: true,
+      seccion: { select: { agrupacion: { select: { id: true } } } },
+    },
+  });
+  if (!actividad) return { ok: false, error: "Actividad no encontrada." };
+  if (!puedeEditarActividad(usuario, actividad))
+    return { ok: false, error: "No tenés permiso para editar esta actividad." };
+
+  const { titulo, tipo, estado, fecha_inicio, fecha_fin, lugar, descripcion } = data;
+
+  if (!titulo.trim()) return { ok: false, error: "El título es requerido." };
+  if (!Object.values(TipoActividad).includes(tipo))
+    return { ok: false, error: "Tipo de actividad inválido." };
+  if (!Object.values(EstadoActividad).includes(estado))
+    return { ok: false, error: "Estado de actividad inválido." };
+  if (isNaN(Date.parse(fecha_inicio)) || isNaN(Date.parse(fecha_fin)))
+    return { ok: false, error: "Fechas inválidas." };
+
+  const fechaInicio = new Date(fecha_inicio);
+  const fechaFin = new Date(fecha_fin);
+  if (fechaFin < fechaInicio)
+    return { ok: false, error: "La fecha de fin no puede ser anterior al inicio." };
+
+  try {
+    await prisma.actividad.update({
+      where: { id },
+      data: {
+        titulo: titulo.trim(),
+        tipo,
+        estado,
+        fecha_inicio: fechaInicio,
+        fecha_fin: fechaFin,
+        lugar: lugar?.trim() || null,
+        descripcion: descripcion?.trim() || null,
+      },
+    });
+    revalidatePath("/calendario");
+    revalidatePath(`/calendario/${id}`);
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, error: "Error al editar la actividad." };
+  }
+}
+
+export async function eliminarActividad(id: string): Promise<ActionResult<undefined>> {
+  const usuario = await getUsuarioActual();
+  if (!usuario) return { ok: false, error: "No autenticado." };
+  if (!checkPermiso(usuario.rol, "CALENDARIO", "eliminar"))
+    return { ok: false, error: "Sin permiso para eliminar actividades." };
+
+  const actividad = await prisma.actividad.findUnique({
+    where: { id },
+    select: {
+      creado_por_id: true,
+      seccion_id: true,
+      agrupacion_id: true,
+      seccion: { select: { agrupacion: { select: { id: true } } } },
+    },
+  });
+  if (!actividad) return { ok: false, error: "Actividad no encontrada." };
+  if (!puedeEditarActividad(usuario, actividad))
+    return { ok: false, error: "No tenés permiso para eliminar esta actividad." };
+
+  const asistencias = await prisma.asistencia.count({ where: { actividad_id: id } });
+  if (asistencias > 0)
+    return {
+      ok: false,
+      error: "No se puede eliminar una actividad con registros de asistencia.",
+    };
+
+  try {
+    await prisma.actividad.delete({ where: { id } });
+    revalidatePath("/calendario");
+    return { ok: true, data: undefined };
+  } catch {
+    return { ok: false, error: "Error al eliminar la actividad." };
   }
 }
 
