@@ -468,18 +468,14 @@ export default async function IntendenciaPage({ searchParams }: PageProps) {
                           {LABEL_CATEGORIA[s.item.categoria]}
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-gray-300">
-                        {s.cantidad_aprobada !== null ? (
-                          <>
-                            <span className="text-green-400">
-                              {s.cantidad_aprobada}
-                            </span>
-                            <span className="text-gray-600">
-                              /{s.cantidad}
-                            </span>
-                          </>
-                        ) : (
-                          s.cantidad
+                      <td className="px-4 py-3 text-gray-300">
+                        <div className="text-sm">
+                          Solicitado: <span className="text-white">{s.cantidad}</span>
+                        </div>
+                        {s.cantidad_aprobada !== null && (
+                          <div className="text-xs text-green-400">
+                            Aprobado: {s.cantidad_aprobada}
+                          </div>
                         )}
                       </td>
                       <td className="px-4 py-3 text-gray-400">

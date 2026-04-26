@@ -1,31 +1,6 @@
+import Image from "next/image";
 import { AlertCircle } from "lucide-react";
 import { loginAction } from "@/app/(auth)/actions";
-
-// ─── Ícono: estrella de 8 puntas ─────────────────────────────────────────────
-
-function EstrellaSVG() {
-  return (
-    <svg
-      width="40"
-      height="40"
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <polygon
-        points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35"
-        fill="#D4B000"
-      />
-      {/* Segunda capa rotada 22.5° para simular 8 puntas */}
-      <polygon
-        points="50,2 59,32 90,32 66,52 76,84 50,66 24,84 34,52 10,32 41,32"
-        fill="#D4B000"
-        transform="rotate(22.5 50 50)"
-      />
-    </svg>
-  );
-}
 
 // ─── Mensajes de error ────────────────────────────────────────────────────────
 
@@ -49,7 +24,13 @@ export default function LoginPage({ searchParams }: LoginPageProps) {
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="mb-8 flex flex-col items-center gap-3">
-          <EstrellaSVG />
+          <Image
+            src="/logo-ruca-tucun.png"
+            alt="Logo Ruca Tucún"
+            width={80}
+            height={80}
+            className="mx-auto mb-2"
+          />
           <h1 className="text-2xl font-bold tracking-wide text-ruca-yellow">
             Ruca Tucún
           </h1>

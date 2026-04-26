@@ -242,8 +242,7 @@ export default function FormularioSolicitud() {
                       </option>
                       {items.map((item) => (
                         <option key={item.id} value={item.id}>
-                          {item.nombre} ({LABEL_CATEGORIA[item.categoria]}) —{" "}
-                          {item.cantidad_disponible} disponibles
+                          {item.nombre} ({LABEL_CATEGORIA[item.categoria]})
                         </option>
                       ))}
                     </select>

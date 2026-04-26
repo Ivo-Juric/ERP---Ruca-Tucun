@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -20,29 +21,6 @@ import { useUsuario } from "./UserContext";
 import CampanaNotificaciones from "./CampanaNotificaciones";
 
 // ─── Utilidades ───────────────────────────────────────────────────────────────
-
-function EstrellaSVG({ size = 28 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <polygon
-        points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35"
-        fill="#D4B000"
-      />
-      <polygon
-        points="50,2 59,32 90,32 66,52 76,84 50,66 24,84 34,52 10,32 41,32"
-        fill="#D4B000"
-        transform="rotate(22.5 50 50)"
-      />
-    </svg>
-  );
-}
 
 const LABEL_ROL: Record<string, string> = {
   JEFE_RUCA: "Jefe de Ruca",
@@ -105,7 +83,12 @@ export default function Sidebar() {
     <aside className="hidden md:flex h-screen w-60 flex-col border-r border-ruca-gray-light bg-ruca-black">
       {/* Logo */}
       <div className="flex items-center gap-3 px-5 py-6">
-        <EstrellaSVG size={28} />
+        <Image
+          src="/logo-ruca-tucun.png"
+          alt="Logo Ruca Tucún"
+          width={32}
+          height={32}
+        />
         <span className="text-lg font-bold tracking-wide text-white">Ruca Tucún</span>
       </div>
 

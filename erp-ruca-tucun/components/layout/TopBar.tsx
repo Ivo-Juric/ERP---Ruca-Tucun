@@ -1,34 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Menu, X } from "lucide-react";
 import { useUsuario } from "./UserContext";
 import Sidebar from "./Sidebar";
 import CampanaNotificaciones from "./CampanaNotificaciones";
-
-
-function EstrellaSVG() {
-  return (
-    <svg
-      width="22"
-      height="22"
-      viewBox="0 0 100 100"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-    >
-      <polygon
-        points="50,5 61,35 95,35 68,57 79,91 50,70 21,91 32,57 5,35 39,35"
-        fill="#D4B000"
-      />
-      <polygon
-        points="50,2 59,32 90,32 66,52 76,84 50,66 24,84 34,52 10,32 41,32"
-        fill="#D4B000"
-        transform="rotate(22.5 50 50)"
-      />
-    </svg>
-  );
-}
 
 export default function TopBar() {
   useUsuario(); // valida contexto
@@ -52,6 +29,7 @@ export default function TopBar() {
         ].join(" ")}
       >
         <button
+          type="button"
           onClick={() => setDrawerOpen(false)}
           className="absolute right-3 top-4 text-zinc-500 hover:text-white"
           aria-label="Cerrar menú"
@@ -69,6 +47,7 @@ export default function TopBar() {
       <header className="fixed left-0 right-0 top-0 z-30 flex h-14 items-center border-b border-ruca-gray-light bg-ruca-black px-4 md:hidden">
         {/* Hamburguesa */}
         <button
+          type="button"
           onClick={() => setDrawerOpen(true)}
           className="text-zinc-400 hover:text-white"
           aria-label="Abrir menú"
@@ -78,7 +57,12 @@ export default function TopBar() {
 
         {/* Logo centrado */}
         <div className="flex flex-1 items-center justify-center gap-2">
-          <EstrellaSVG />
+          <Image
+            src="/logo-ruca-tucun.png"
+            alt="Logo Ruca Tucún"
+            width={28}
+            height={28}
+          />
           <span className="text-base font-bold tracking-wide text-white">Ruca Tucún</span>
         </div>
 
